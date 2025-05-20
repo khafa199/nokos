@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nokos Virtual Pro+</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #6a0dad;
+            --secondary-color: #9b59b6;
+            --accent-color: #f39c12;
+            --text-color: #ecf0f1;
+            --bg-color: #2c3e50;
+            --dark-bg-color: #233140;
+            --input-bg-color: #34495e;
+            --success-color: #2ecc71;
+            --error-color: #e74c3c;
+            --card-bg: #3b5065;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+        .container {
+            background-color: var(--dark-bg-color);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 700px;
+            margin-bottom: 20px;
+        }
+        .view { display: none; }
+        .view.active { display: block; }
+        h1, h2 {
+            color: var(--accent-color);
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        }
+        h1 .fa-solid, h2 .fa-solid { margin-right: 10px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; color: var(--secondary-color); }
+        input[type="text"], input[type="password"], input[type="email"], input[type="number"], select {
+            width: calc(100% - 22px); padding: 12px; margin-bottom: 15px; border: 1px solid var(--secondary-color);
+            border-radius: 6px; background-color: var(--input-bg-color); color: var(--text-color); font-size: 1em;
+        }
+        input::placeholder { color: #95a5a6; }
+        button {
+            background-image: linear-gradient(to right, var(--primary-color), var(--secondary-color)); color: white;
+            padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 1.1em;
+            font-weight: bold; transition: all 0.3s ease; display: inline-flex; align-items: center;
+            justify-content: center; gap: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        button:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.3); filter: brightness(1.1); }
+        button:active { transform: translateY(0px); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        button.secondary { background-image: linear-gradient(to right, #7f8c8d, #95a5a6); }
+        button.danger { background-image: linear-gradient(to right, #c0392b, #e74c3c); }
+        button:disabled { background-image: linear-gradient(to right, #585858, #707070); cursor: not-allowed; filter: grayscale(0.7); }
+        .message { padding: 12px; margin-bottom: 15px; border-radius: 6px; text-align: center; font-weight: bold; }
+        .message.success { background-color: var(--success-color); color: var(--bg-color); }
+        .message.error { background-color: var(--error-color); color: white; }
+        .message.info { background-color: #3498db; color: white; }
+        .form-footer { margin-top: 15px; text-align: center; }
+        .form-footer a { color: var(--accent-color); text-decoration: none; font-weight: bold; }
+        .form-footer a:hover { text-decoration: underline; }
+        nav {
+            background-color: var(--dark-bg-color); padding: 10px 0; margin-bottom: 20px;
+            border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); width: 100%; max-width: 700px;
+        }
+        nav ul { list-style: none; padding: 0; margin: 0; display: flex; justify-content: space-around; }
+        nav ul li button { background: none; box-shadow: none; padding: 10px 15px; }
+        nav ul li button.active-nav { background-color: var(--primary-color); color: white; border-bottom: 2px solid var(--accent-color);}
+        nav ul li button:hover { background-color: var(--primary-color); transform: none; filter: none; }
+        .item-card {
+            background-color: var(--card-bg); padding: 15px; margin-bottom: 12px;
+            border-radius: 8px; border-left: 5px solid var(--accent-color);
+        }
+        .item-card h3, .item-card h4 { margin-top: 0; color: var(--accent-color); }
+        .otp-container { max-height: 300px; overflow-y: auto; padding-right: 10px; margin-top:15px; border: 1px solid var(--input-bg-color); border-radius: 5px; }
+        #loadingIndicator {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background-color: rgba(0,0,0,0.7); color: white; padding: 20px; border-radius: 8px;
+            z-index: 1000; display: none; font-size: 1.2em;
+        }
+        #loadingIndicator .fa-spinner { margin-right: 10px; }
+        .profile-info p { margin: 5px 0; }
+        .profile-info strong { color: var(--secondary-color); }
+        #apiKeyStatus.valid { color: var(--success-color); }
+        #apiKeyStatus.invalid { color: var(--error-color); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .tabs { margin-bottom: 15px; }
+        .tabs button { margin-right: 5px; background-image: linear-gradient(to right, #7f8c8d, #95a5a6); }
+        .tabs button.active { background-image: linear-gradient(to right, var(--primary-color), var(--secondary-color)); }
+    </style>
+</head>
+<body>
+    <div id="loadingIndicator"><i class="fas fa-spinner fa-spin"></i> Memuat...</div>
+
+    <header class="container" style="text-align: center;">
+        <h1><i class="fas fa-shield-virus"></i> Nokos Virtual Pro+</h1>
+    </header>
+
+    <nav id="mainNav" style="display: none;">
+        <ul>
+            <li><button id="navHomeBtn" class="active-nav"><i class="fas fa-home"></i> Beranda</button></li>
+            <li><button id="navOrdersBtn"><i class="fas fa-history"></i> Pesanan Saya</button></li>
+            <li><button id="navProfileBtn"><i class="fas fa-user-cog"></i> Profil</button></li>
+            <li><button id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button></li>
+        </ul>
+    </nav>
+
+    <div id="authContainer" class="container">
+        <div id="registerView" class="view">
+            <h2><i class="fas fa-user-plus"></i> Daftar Akun Baru</h2>
+            <form id="registerForm">
+                <div><label for="regUsername"><i class="fas fa-user"></i> Username</label><input type="text" id="regUsername" required></div>
+                <div><label for="regPassword"><i class="fas fa-lock"></i> Password</label><input type="password" id="regPassword" required minlength="6"></div>
+                <button type="submit"><i class="fas fa-paper-plane"></i> Daftar</button>
+            </form>
+            <div class="form-footer">Sudah punya akun? <a href="#" id="showLoginLink">Login di sini</a></div>
+        </div>
+
+        <div id="loginView" class="view active">
+            <h2><i class="fas fa-sign-in-alt"></i> Login</h2>
+            <form id="loginForm">
+                <div><label for="loginUsername"><i class="fas fa-user"></i> Username</label><input type="text" id="loginUsername" required></div>
+                <div><label for="loginPassword"><i class="fas fa-lock"></i> Password</label><input type="password" id="loginPassword" required></div>
+                <button type="submit"><i class="fas fa-key"></i> Login</button>
+            </form>
+            <div class="form-footer">Belum punya akun? <a href="#" id="showRegisterLink">Daftar di sini</a></div>
+        </div>
+    </div>
+
+    <div id="appContainer" class="container view">
+        <div id="homeView" class="view tab-content">
+            <h2><i class="fas fa-concierge-bell"></i> Pesan Nomor Virtual</h2>
+            <div class="controls" style="margin-bottom:15px;">
+                 <label for="countrySelect"><i class="fas fa-globe-asia"></i> Pilih Negara:</label>
+                 <select id="countrySelect"><option value="">Memuat negara...</option></select>
+            </div>
+            <div id="servicesList" style="margin-top:15px;">Pilih negara untuk melihat layanan.</div>
+            <div id="currentOrderSection" style="margin-top:20px; display:none;" class="item-card">
+                <h3><i class="fas fa-receipt"></i> Pesanan Saat Ini</h3>
+                <div id="orderDetails"></div>
+                <div id="otpContainer" class="otp-container"><p>Menunggu OTP...</p></div>
+                <button id="cancelOrderBtn" class="danger" style="margin-top:15px;"><i class="fas fa-times-circle"></i> Batalkan Pesanan</button>
+                <button id="finishOrderBtn" class="secondary" style="margin-top:15px;"><i class="fas fa-check-circle"></i> Selesai (OTP Diterima)</button>
+                <button id="requestNewNumberBtn" class="secondary" style="margin-top:15px;"><i class="fas fa-redo"></i> Minta Nomor Lain</button>
+            </div>
+        </div>
+
+        <div id="myOrdersView" class="view tab-content">
+            <h2><i class="fas fa-clipboard-list"></i> Riwayat Pesanan Saya</h2>
+            <div class="tabs">
+                <button class="tab-link active" data-tab="activeOrdersTabContent"><i class="fas fa-play-circle"></i> Pesanan Aktif</button>
+                <button class="tab-link" data-tab="orderHistoryTabContent"><i class="fas fa-history"></i> Riwayat Lengkap</button>
+            </div>
+            <div id="activeOrdersTabContent" class="tab-content active">
+                <h3>Pesanan Aktif</h3>
+                <div id="activeOrdersList">Memuat pesanan aktif...</div>
+            </div>
+            <div id="orderHistoryTabContent" class="tab-content">
+                <h3>Riwayat Pesanan</h3>
+                <div id="orderHistoryList">Memuat riwayat pesanan...</div>
+            </div>
+        </div>
+
+        <div id="profileView" class="view tab-content">
+            <h2><i class="fas fa-id-card"></i> Profil & Saldo</h2>
+            <div class="profile-info item-card">
+                <p><i class="fas fa-user-circle"></i> Username: <strong id="profileUsername"></strong></p>
+                <p><i class="fas fa-key"></i> API Key VirtuSIM Anda: <span id="apiKeyStatus"></span></p>
+                 <form id="apiKeyForm" style="margin-top:10px;">
+                    <div><label for="userApiKey"><i class="fas fa-terminal"></i> Masukkan/Ubah API Key</label>
+                    <input type="text" id="userApiKey" placeholder="API Key VirtuSIM Anda"></div>
+                    <button type="submit"><i class="fas fa-save"></i> Simpan API Key</button>
+                </form>
+            </div>
+
+            <div class="item-card" style="margin-top:20px;">
+                <h3><i class="fas fa-wallet"></i> Informasi Saldo</h3>
+                <button id="checkBalanceBtn"><i class="fas fa-sync-alt"></i> Refresh Saldo</button>
+                <p id="balanceResult" style="font-size:1.2em; font-weight:bold;">Memuat saldo...</p>
+                <h4><i class="fas fa-receipt"></i> Log Saldo</h4>
+                <div id="balanceLogsList" style="max-height:200px; overflow-y:auto; padding:5px; background-color: var(--input-bg-color); border-radius: 4px;">Memuat log saldo...</div>
+            </div>
+            
+            <div class="item-card" style="margin-top:20px;">
+                <h3><i class="fas fa-money-bill-wave"></i> Deposit Saldo</h3>
+                <form id="depositForm">
+                    <div><label for="depositMethod"><i class="fas fa-credit-card"></i> Metode Pembayaran (ID):</label>
+                         <input type="number" id="depositMethod" placeholder="e.g., 20 untuk DANA" required>
+                         <small>Lihat ID metode di dokumentasi VirtuSIM.</small>
+                    </div>
+                    <div><label for="depositAmount"><i class="fas fa-coins"></i> Jumlah (misal 20000):</label>
+                         <input type="number" id="depositAmount" placeholder="e.g., 20000" required></div>
+                    <div><label for="depositPhone"><i class="fas fa-phone"></i> Nomor Telepon Anda (untuk notifikasi):</label>
+                         <input type="text" id="depositPhone" placeholder="e.g., 081234567890" required></div>
+                    <button type="submit"><i class="fas fa-arrow-up"></i> Proses Deposit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="messageArea" class="message" style="display:none; max-width: 660px; width: calc(100% - 40px); margin-top: 10px;"></div>
+
+    <script>
+        let currentUser = null;
+        let currentOrder = null; 
+        let otpPollIntervalId = null;
+        let countdownIntervalId = null;
+        const OTP_POLL_INTERVAL = 7000; 
+
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const messageArea = document.getElementById('messageArea');
+        const authContainer = document.getElementById('authContainer');
+        const appContainer = document.getElementById('appContainer');
+        const mainNav = document.getElementById('mainNav');
+
+        const views = {
+            register: document.getElementById('registerView'),
+            login: document.getElementById('loginView'),
+            home: document.getElementById('homeView'),
+            myOrders: document.getElementById('myOrdersView'),
+            profile: document.getElementById('profileView'),
+        };
+        const navButtons = {
+            home: document.getElementById('navHomeBtn'),
+            orders: document.getElementById('navOrdersBtn'),
+            profile: document.getElementById('navProfileBtn'),
+        };
+
+        const registerForm = document.getElementById('registerForm');
+        const loginForm = document.getElementById('loginForm');
+        const apiKeyForm = document.getElementById('apiKeyForm');
+        const depositForm = document.getElementById('depositForm');
+
+        const showLoginLink = document.getElementById('showLoginLink');
+        const showRegisterLink = document.getElementById('showRegisterLink');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        const countrySelect = document.getElementById('countrySelect');
+        const servicesListDiv = document.getElementById('servicesList');
+        
+        const currentOrderSection = document.getElementById('currentOrderSection');
+        const orderDetailsDiv = document.getElementById('orderDetails');
+        const otpContainerDiv = document.getElementById('otpContainer');
+        const cancelOrderBtn = document.getElementById('cancelOrderBtn');
+        const finishOrderBtn = document.getElementById('finishOrderBtn');
+        const requestNewNumberBtn = document.getElementById('requestNewNumberBtn');
+        
+        const profileUsernameSpan = document.getElementById('profileUsername');
+        const userApiKeyInput = document.getElementById('userApiKey');
+        const apiKeyStatusSpan = document.getElementById('apiKeyStatus');
+        const checkBalanceBtn = document.getElementById('checkBalanceBtn');
+        const balanceResultP = document.getElementById('balanceResult');
+        const balanceLogsListDiv = document.getElementById('balanceLogsList');
+
+        const activeOrdersListDiv = document.getElementById('activeOrdersList');
+        const orderHistoryListDiv = document.getElementById('orderHistoryList');
+        
+        function showLoading(show = true) { loadingIndicator.style.display = show ? 'flex' : 'none'; }
+        function showMessage(text, type = 'error') {
+            messageArea.textContent = text;
+            messageArea.className = `message ${type}`;
+            messageArea.style.display = 'block';
+            setTimeout(() => messageArea.style.display = 'none', 6000);
+        }
+
+        function setActiveNav(navKey) {
+            Object.values(navButtons).forEach(btn => btn.classList.remove('active-nav'));
+            if (navButtons[navKey]) navButtons[navKey].classList.add('active-nav');
+        }
+
+        function showView(viewName) {
+            Object.values(views).forEach(view => view.classList.remove('active'));
+            if (views[viewName]) views[viewName].classList.add('active');
+            
+            const activeViewElement = views[viewName];
+            if (activeViewElement && activeViewElement.id !== 'homeView') {
+                const firstTabContent = activeViewElement.querySelector('.tab-content.active'); 
+                if (!firstTabContent) { 
+                    const allTabsInView = activeViewElement.querySelectorAll('.tab-content');
+                     if(allTabsInView.length > 0 && !allTabsInView[0].classList.contains('view') ){ 
+                        allTabsInView.forEach(tc => tc.classList.remove('active')); 
+                        allTabsInView[0].classList.add('active'); 
+                        const correspondingTabButton = activeViewElement.querySelector(`.tabs .tab-link[data-tab="${allTabsInView[0].id}"]`);
+                        if(correspondingTabButton){
+                            activeViewElement.querySelectorAll('.tabs .tab-link').forEach(tb => tb.classList.remove('active'));
+                            correspondingTabButton.classList.add('active');
+                        }
+                     }
+                }
+            }
+
+            if (viewName === 'login' || viewName === 'register') {
+                authContainer.style.display = 'block';
+                appContainer.style.display = 'none';
+                mainNav.style.display = 'none';
+            } else {
+                authContainer.style.display = 'none';
+                appContainer.style.display = 'block';
+                mainNav.style.display = 'flex';
+                if (viewName === 'home') setActiveNav('home');
+                else if (viewName === 'myOrders') setActiveNav('orders');
+                else if (viewName === 'profile') setActiveNav('profile');
+            }
+        }
+
+        async function apiCall(endpoint, method = 'GET', body = null) {
+            showLoading();
+            try {
+                const options = { method, headers: { 'Content-Type': 'application/json' } };
+                if (body && method !== 'GET') options.body = JSON.stringify(body);
+                const response = await fetch(endpoint, options);
+                const data = await response.json();
+                
+                if (!data.success) { 
+                    showMessage(data.message || `Operasi gagal (Kode: ${response.status})`);
+                    return data; 
+                }
+                return data;
+            } catch (error) {
+                // console.error("API Call Client Error:", error);
+                showMessage('Kesalahan jaringan atau server tidak merespons.');
+                return { success: false, message: 'Kesalahan jaringan.'};
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function handleRegister(event) {
+            event.preventDefault();
+            const username = document.getElementById('regUsername').value;
+            const password = document.getElementById('regPassword').value;
+            const result = await apiCall('/api/register', 'POST', { username, password });
+            if (result && result.success) {
+                showMessage(result.message, 'success');
+                showView('login');
+                registerForm.reset();
+            }
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            const result = await apiCall('/api/login', 'POST', { username, password });
+            if (result && result.success) {
+                currentUser = result.user;
+                showMessage(result.message, 'success');
+                updateUIAfterLogin();
+            }
+        }
+
+        async function handleLogout() {
+            const result = await apiCall('/api/logout', 'POST');
+            if (result && result.success) {
+                showMessage(result.message, 'success');
+            } 
+            currentUser = null;
+            currentOrder = null;
+            if (otpPollIntervalId) clearInterval(otpPollIntervalId);
+            if (countdownIntervalId) clearInterval(countdownIntervalId);
+            updateUIAfterLogout();
+        }
+
+        async function checkSession() {
+            const result = await apiCall('/api/session');
+            if (result && result.loggedIn) {
+                currentUser = result.user;
+                updateUIAfterLogin();
+            } else {
+                updateUIAfterLogout();
+            }
+        }
+
+        function updateUIAfterLogin() {
+            showView('home'); 
+            loadCountries();
+            if (currentUser) {
+                profileUsernameSpan.textContent = currentUser.username;
+                userApiKeyInput.value = currentUser.apiKey || '';
+                updateApiKeyStatusUI(currentUser.apiKey);
+                loadActiveOrdersForHomeView(); 
+            }
+        }
+
+        function updateUIAfterLogout() {
+            showView('login');
+            currentUser = null;
+            currentOrder = null;
+            countrySelect.innerHTML = '<option value="">Pilih Negara</option>';
+            servicesListDiv.innerHTML = 'Silakan login dan pilih negara.';
+            currentOrderSection.style.display = 'none';
+            balanceResultP.textContent = '';
+            balanceLogsListDiv.innerHTML = '';
+            activeOrdersListDiv.innerHTML = '';
+            orderHistoryListDiv.innerHTML = '';
+        }
+
+        function loadProfileView() {
+            if (!currentUser) return;
+            showView('profile');
+            profileUsernameSpan.textContent = currentUser.username;
+            userApiKeyInput.value = currentUser.apiKey || '';
+            updateApiKeyStatusUI(currentUser.apiKey);
+            fetchBalance();
+            fetchBalanceLogs();
+        }
+
+        async function handleApiKeyUpdate(event) {
+            event.preventDefault();
+            const apiKey = userApiKeyInput.value;
+            const result = await apiCall('/api/profile/update-apikey', 'POST', { apiKey });
+            if (result && result.success) {
+                showMessage(result.message, 'success');
+                currentUser.apiKey = result.user.apiKey;
+                updateApiKeyStatusUI(currentUser.apiKey);
+            }
+        }
+        
+        function updateApiKeyStatusUI(apiKey) {
+            if (apiKey && apiKey.trim() !== '') {
+                apiKeyStatusSpan.textContent = ' (Terpasang)';
+                apiKeyStatusSpan.className = 'valid';
+            } else {
+                apiKeyStatusSpan.textContent = ' (Belum diatur!)';
+                apiKeyStatusSpan.className = 'invalid';
+            }
+        }
+
+        async function fetchBalance() {
+            if (!currentUser || !currentUser.apiKey) {
+                balanceResultP.textContent = 'API Key belum diatur.';
+                return;
+            }
+            balanceResultP.textContent = 'Memeriksa saldo...';
+            const result = await apiCall('/api/profile/balance');
+            if (result && result.success && result.data) {
+                const balance = result.data.balance !== undefined ? result.data.balance : (result.data.data ? result.data.data.balance : 'N/A');
+                balanceResultP.textContent = `Saldo: ${balance}`;
+            } else if (result && !result.success) {
+                 balanceResultP.textContent = result.message || 'Gagal mengambil saldo.';
+            } else {
+                balanceResultP.textContent = 'Gagal mengambil saldo.';
+            }
+        }
+
+        async function fetchBalanceLogs() {
+             if (!currentUser || !currentUser.apiKey) {
+                balanceLogsListDiv.innerHTML = '<p>API Key belum diatur.</p>';
+                return;
+            }
+            balanceLogsListDiv.innerHTML = '<p>Memuat log saldo...</p>';
+            const result = await apiCall('/api/profile/balance-logs');
+            if (result && result.success && result.data && result.data.data && Array.isArray(result.data.data)) {
+                if (result.data.data.length === 0) {
+                    balanceLogsListDiv.innerHTML = '<p>Tidak ada log saldo.</p>';
+                    return;
+                }
+                let html = '<ul style="list-style:none; padding:0;">';
+                result.data.data.forEach(log => {
+                    html += `<li class="item-card" style="font-size:0.9em; padding:8px; margin-bottom:5px;">
+                        <strong>${log.date || new Date(log.timestamp * 1000).toLocaleString()}</strong>: ${log.description || log.note || 'Tidak ada deskripsi'} 
+                        (${log.type || ''} ${log.amount_str || log.amount || ''})
+                        <br/>Saldo Akhir: ${log.current_balance || 'N/A'}
+                    </li>`;
+                });
+                html += '</ul>';
+                balanceLogsListDiv.innerHTML = html;
+            } else if (result && !result.success) {
+                 balanceLogsListDiv.innerHTML = `<p>${result.message || 'Gagal mengambil log saldo.'}</p>`;
+            } else {
+                 balanceLogsListDiv.innerHTML = `<p>Gagal mengambil log saldo.</p>`;
+            }
+        }
+
+        async function handleDeposit(event) {
+            event.preventDefault();
+            if (!currentUser || !currentUser.apiKey) {
+                showMessage('API Key belum diatur di profil Anda.');
+                return;
+            }
+            const method = document.getElementById('depositMethod').value;
+            const amount = document.getElementById('depositAmount').value;
+            const phone = document.getElementById('depositPhone').value;
+
+            const result = await apiCall('/api/profile/deposit', 'POST', { method, amount, phone });
+            if (result && result.success && result.data) {
+                showMessage(result.data.msg || result.data.message || 'Permintaan deposit berhasil, ikuti instruksi.', 'success');
+                depositForm.reset();
+                fetchBalance(); 
+            } else if (result && !result.success) {
+                 showMessage(result.message || 'Gagal melakukan deposit.');
+            }
+        }
+
+        async function loadCountries() {
+            countrySelect.innerHTML = '<option value="">Memuat negara...</option>';
+            const result = await apiCall('/api/countries');
+
+            if (result && result.success && result.data && result.data.status === true && Array.isArray(result.data.data)) {
+                const countriesArray = result.data.data;
+                countrySelect.innerHTML = '<option value="">-- Pilih Negara --</option>';
+                
+                countriesArray.forEach(countryObj => {
+                    const option = document.createElement('option');
+                    option.value = countryObj.country_name.toLowerCase().replace(/\s+/g, '');
+                    option.textContent = countryObj.country_name; 
+                    option.dataset.countryId = countryObj.id; 
+                    option.dataset.countryCode = countryObj.country_code; 
+                    countrySelect.appendChild(option);
+                });
+
+                let indonesiaOptionValue = "indonesia"; 
+                if (countrySelect.querySelector(`option[value="${indonesiaOptionValue}"]`)) {
+                    countrySelect.value = indonesiaOptionValue;
+                    loadServicesForSelectedCountry(); 
+                }
+            } else {
+                countrySelect.innerHTML = '<option value="">Gagal memuat negara</option>';
+                servicesListDiv.innerHTML = `<p class="error-text">${(result && result.message) ? result.message : 'Gagal memuat data negara dari server.'}</p>`;
+                if (result && result.data && (result.data.message || result.data.msg) ) {
+                     servicesListDiv.innerHTML += `<br>Pesan API: ${result.data.message || result.data.msg}`;
+                }
+            }
+        }
+
+        async function loadServicesForSelectedCountry() {
+            const selectedValue = countrySelect.value; 
+            if (!selectedValue) {
+                servicesListDiv.innerHTML = 'Pilih negara untuk melihat layanan.';
+                return;
+            }
+            servicesListDiv.innerHTML = `<p><i class="fas fa-spinner fa-spin"></i> Memuat layanan untuk ${countrySelect.options[countrySelect.selectedIndex].text}...</p>`;
+            
+            const result = await apiCall(`/api/services?country=${selectedValue}`); 
+            
+            if (result && result.success && result.data && (result.data.status === true || result.data.response === "1") && result.data.data) {
+                renderServices(result.data.data, selectedValue);
+            } else {
+                servicesListDiv.innerHTML = `<p class="error-text">${(result && result.message) ? result.message : 'Gagal memuat layanan.'}</p>`;
+                 if (result && result.data && (result.data.message || result.data.msg) ) {
+                     servicesListDiv.innerHTML += `<br>Pesan API: ${result.data.message || result.data.msg}`;
+                }
+            }
+        }
+
+        function renderServices(servicesData, countryValue) {
+            servicesListDiv.innerHTML = '';
+            if (Object.keys(servicesData).length === 0) {
+                servicesListDiv.innerHTML = '<p>Tidak ada layanan tersedia untuk negara ini.</p>';
+                return;
+            }
+            
+            const filterInput = document.createElement('input');
+            filterInput.type = 'text';
+            filterInput.id = 'serviceFilterInput';
+            filterInput.placeholder = 'Cari layanan (misal: Whatsapp, Gojek)...';
+            filterInput.style.marginBottom = '15px';
+            filterInput.onkeyup = () => {
+                const filterText = filterInput.value.toLowerCase();
+                document.querySelectorAll('.service-item-card').forEach(card => {
+                    const serviceName = card.dataset.serviceName.toLowerCase();
+                    if (serviceName.includes(filterText)) {
+                        card.style.display = '';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            };
+            servicesListDiv.appendChild(filterInput);
+
+            for (const serviceId in servicesData) {
+                const service = servicesData[serviceId];
+                const serviceName = service.name || service.service;
+                const servicePrice = service.price;
+                const serviceStock = service.qty || service.quantity || service.stock || 0;
+
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'item-card service-item-card';
+                itemDiv.dataset.serviceName = serviceName;
+                itemDiv.innerHTML = `
+                    <h3><i class="fas fa-tags"></i> ${serviceName}</h3>
+                    <p><i class="fas fa-dollar-sign"></i> Harga: ${servicePrice} | <i class="fas fa-layer-group"></i> Stok: ${serviceStock}</p>
+                    <button class="order-service-btn" data-service-id="${serviceId}" data-country="${countryValue}" data-service-name="${serviceName}" ${parseInt(serviceStock) === 0 ? 'disabled' : ''}>
+                        <i class="fas fa-shopping-cart"></i> ${parseInt(serviceStock) === 0 ? 'Stok Habis' : 'Pesan Nomor'}
+                    </button>
+                `;
+                servicesListDiv.appendChild(itemDiv);
+            }
+
+            document.querySelectorAll('.order-service-btn').forEach(button => {
+                button.addEventListener('click', () => {
+                    if (!currentUser.apiKey) {
+                        showMessage('Harap atur API Key VirtuSIM Anda di Profil terlebih dahulu!');
+                        loadProfileView();
+                        return;
+                    }
+                    if (currentOrder && currentOrder.id) {
+                        showMessage('Anda sudah memiliki pesanan aktif. Selesaikan atau batalkan terlebih dahulu.', 'info');
+                        return;
+                    }
+                    handleOrderService(button.dataset.serviceId, button.dataset.country, button.dataset.serviceName);
+                });
+            });
+        }
+
+        async function handleOrderService(serviceId, country, serviceName) {
+            const operator = 'any'; 
+            const result = await apiCall('/api/order', 'POST', { service_id: serviceId, country, operator });
+
+            if (result && result.success && result.data) {
+                const orderData = result.data.data || result.data; 
+                
+                if (!orderData.id && !orderData.order_id){
+                    showMessage(orderData.msg || orderData.message || 'Gagal memesan: ID pesanan tidak diterima.', 'error');
+                    return;
+                }
+
+                currentOrder = {
+                    id: orderData.id || orderData.order_id,
+                    number: orderData.number,
+                    serviceName: serviceName, 
+                    timeLeft: parseInt(orderData.time_left || orderData.TimeLeft || orderData.timeleft || 1200), 
+                    country: orderData.country || country 
+                };
+                showMessage('Nomor berhasil dipesan!', 'success');
+                displayCurrentOrderUI();
+                startOtpPolling(currentOrder.id);
+            } else if (result && !result.success) {
+                 showMessage(result.message || 'Gagal memesan nomor.');
+            }
+        }
+        
+        function displayCurrentOrderUI() {
+            if (!currentOrder || !currentOrder.id) {
+                currentOrderSection.style.display = 'none';
+                return;
+            }
+            orderDetailsDiv.innerHTML = `
+                <p><i class="fas fa-phone-alt"></i> Nomor: <strong>${currentOrder.number || 'N/A'}</strong></p>
+                <p><i class="fas fa-server"></i> Layanan: ${currentOrder.serviceName}</p>
+                <p><i class="fas fa-clock"></i> Waktu Tersisa: <span id="orderTimeLeft">${currentOrder.timeLeft}</span> detik</p>
+                <p><small>Order ID: ${currentOrder.id}</small></p>
+            `;
+            otpContainerDiv.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Menunggu OTP...</p>';
+            currentOrderSection.style.display = 'block';
+            const serviceFilterInput = document.getElementById('serviceFilterInput');
+            if(serviceFilterInput) serviceFilterInput.value = '';
+            document.querySelectorAll('.service-item-card').forEach(card => card.style.display = ''); 
+            startOrderCountdown(currentOrder.timeLeft);
+        }
+
+        function startOrderCountdown(seconds) {
+            if (countdownIntervalId) clearInterval(countdownIntervalId);
+            const timeLeftSpan = document.getElementById('orderTimeLeft');
+            if (!timeLeftSpan) return;
+            let remaining = parseInt(seconds);
+
+            countdownIntervalId = setInterval(() => {
+                if (remaining <= 0) {
+                    clearInterval(countdownIntervalId);
+                    timeLeftSpan.textContent = "Habis";
+                    if (otpPollIntervalId) clearInterval(otpPollIntervalId);
+                    showMessage("Waktu untuk nomor ini telah habis.", "info");
+                    currentOrderSection.style.display = 'none'; 
+                    currentOrder = null; 
+                } else {
+                    timeLeftSpan.textContent = remaining;
+                    remaining--;
+                }
+            }, 1000);
+        }
+
+        function startOtpPolling(orderId) {
+            if (otpPollIntervalId) clearInterval(otpPollIntervalId);
+            otpPollIntervalId = setInterval(async () => {
+                if (!currentOrder || currentOrder.id !== orderId) { 
+                    clearInterval(otpPollIntervalId);
+                    return;
+                }
+                const result = await apiCall(`/api/order/status/${orderId}`);
+                if (result && result.success && result.data) {
+                    const statusData = result.data; 
+                    
+                    if (statusData.status_code === "RECEIVED_SMS" || (statusData.response === "1" && statusData.sms_code)) {
+                        otpContainerDiv.innerHTML = `<div class="item-card" style="text-align:center;">
+                            <p style="margin-bottom:5px;"><strong><i class="fas fa-check-circle"></i> OTP Diterima:</strong></p>
+                            <h3 style="font-size:2em; color:var(--success-color); margin:5px 0;">${statusData.sms_code}</h3>
+                            <button onclick="copyToClipboard('${statusData.sms_code}')" style="padding:8px 12px; font-size:0.9em;"><i class="fas fa-copy"></i> Salin Kode</button>
+                        </div>`;
+                        clearInterval(otpPollIntervalId); 
+                        showMessage('OTP berhasil diterima!', 'success');
+                    } else if (statusData.status_code === "WAITING_FOR_SMS" || statusData.msg === "WAITING_FOR_SMS" || (statusData.response === "1" && !statusData.sms_code)) {
+                        otpContainerDiv.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Menunggu OTP...</p>';
+                    } else { 
+                        otpContainerDiv.innerHTML = `<p class="error-text"><i class="fas fa-exclamation-triangle"></i> Status: ${statusData.msg || statusData.status_code || 'Tidak diketahui'}</p>`;
+                        clearInterval(otpPollIntervalId);
+                        if (countdownIntervalId) clearInterval(countdownIntervalId);
+                        currentOrderSection.style.display = 'none';
+                        currentOrder = null;
+                        showMessage(`Pesanan ${orderId}: ${statusData.msg || statusData.status_code || 'bermasalah'}.`, 'info');
+                    }
+                } 
+            }, OTP_POLL_INTERVAL);
+        }
+        
+        async function handleSetOrderStatus(orderId, statusValue) {
+            if (!orderId) {
+                 showMessage('Tidak ada ID pesanan yang valid.', 'error');
+                 return;
+            }
+            const statusMessages = {
+                '3': 'membatalkan',
+                '6': 'menyelesaikan',
+                '8': 'meminta nomor baru untuk',
+            }
+            showMessage(`Sedang ${statusMessages[statusValue] || 'mengubah status'} pesanan ${orderId}...`, 'info');
+
+            const result = await apiCall(`/api/order/set-status/${orderId}`, 'POST', { status: statusValue });
+            if (result && result.success && result.data && (result.data.response === "1" || result.data.status === "success")) {
+                 showMessage(result.data.msg || `Status pesanan ${orderId} berhasil diubah.`, 'success');
+                 if (statusValue === '3' || statusValue === '6' || statusValue === '8') { 
+                    if (otpPollIntervalId) clearInterval(otpPollIntervalId);
+                    if (countdownIntervalId) clearInterval(countdownIntervalId);
+                    currentOrderSection.style.display = 'none';
+                    currentOrder = null;
+                 }
+            } else if (result && !result.success) {
+                showMessage(result.message || `Gagal mengubah status pesanan ${orderId}.`);
+            } else if (result && result.data && (result.data.response !== "1" && result.data.status !== "success")){
+                 showMessage(result.data.msg || `Gagal mengubah status pesanan ${orderId}.`, 'error');
+            }
+        }
+
+        function copyToClipboard(text) {
+            if (!text) return;
+            navigator.clipboard.writeText(text)
+                .then(() => showMessage('Teks OTP disalin!', 'success'))
+                .catch(err => showMessage('Gagal menyalin teks.', 'error'));
+        }
+        
+        function loadMyOrdersView() {
+            showView('myOrders');
+            const defaultTabId = 'activeOrdersTabContent';
+            const defaultTabButton = document.querySelector(`.tabs .tab-link[data-tab="${defaultTabId}"]`);
+            
+            document.querySelectorAll('#myOrdersView .tabs .tab-link').forEach(btn => btn.classList.remove('active'));
+            if(defaultTabButton) defaultTabButton.classList.add('active');
+
+            document.querySelectorAll('#myOrdersView .tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(defaultTabId).classList.add('active');
+
+            loadActiveOrdersList();
+            loadOrderHistoryList();
+        }
+        
+        async function loadActiveOrdersForHomeView() {
+            if (!currentUser || !currentUser.apiKey) return;
+
+            const result = await apiCall('/api/order/active');
+            if (result && result.success && result.data && result.data.data) {
+                const activeOrders = result.data.data; 
+                if (activeOrders.length > 0) {
+                    const firstActive = activeOrders[0];
+                    currentOrder = {
+                        id: firstActive.id,
+                        number: firstActive.number,
+                        serviceName: firstActive.service_name,
+                        timeLeft: parseInt(firstActive.time_left || firstActive.TimeLeft || firstActive.timeleft || 1200),
+                        country: firstActive.country
+                    };
+                    showMessage(`Melanjutkan pesanan aktif ID: ${currentOrder.id}`, 'info');
+                    displayCurrentOrderUI();
+                    startOtpPolling(currentOrder.id);
+                } else {
+                    currentOrderSection.style.display = 'none';
+                    currentOrder = null;
+                }
+            } else {
+                currentOrderSection.style.display = 'none';
+                currentOrder = null;
+            }
+        }
+
+        async function loadActiveOrdersList() {
+            activeOrdersListDiv.innerHTML = '<p>Memuat pesanan aktif...</p>';
+            if (!currentUser || !currentUser.apiKey) {
+                activeOrdersListDiv.innerHTML = '<p>Silakan atur API Key Anda di Profil.</p>'; return;
+            }
+            const result = await apiCall('/api/order/active');
+            renderOrderList(result, activeOrdersListDiv, true);
+        }
+
+        async function loadOrderHistoryList() {
+            orderHistoryListDiv.innerHTML = '<p>Memuat riwayat pesanan...</p>';
+             if (!currentUser || !currentUser.apiKey) {
+                orderHistoryListDiv.innerHTML = '<p>Silakan atur API Key Anda di Profil.</p>'; return;
+            }
+            const result = await apiCall('/api/order/history');
+            renderOrderList(result, orderHistoryListDiv, false);
+        }
+
+        function renderOrderList(result, containerDiv, isActiveList) {
+            if (result && result.success && result.data && result.data.data) {
+                const orders = result.data.data; 
+                if (orders.length === 0) {
+                    containerDiv.innerHTML = '<p>Tidak ada pesanan.</p>';
+                    return;
+                }
+                let html = '<div>';
+                orders.forEach(order => {
+                    const timeLeftDisplay = order.time_left ? ` | Sisa Waktu: ${order.time_left}s` : '';
+                    const smsCodeDisplay = order.sms_code ? ` | OTP: <strong>${order.sms_code}</strong>` : '';
+                    const statusDisplay = order.status_code ? ` | Status: ${order.status_code}` : (order.status_text || '');
+
+                    html += `
+                        <div class="item-card">
+                            <h4><i class="fas fa-hashtag"></i> ID: ${order.id} (${order.service_name || 'N/A'})</h4>
+                            <p><i class="fas fa-phone"></i> Nomor: ${order.number || 'N/A'} 
+                               <i class="fas fa-globe-americas"></i> ${order.country || 'N/A'}</p>
+                            <p><i class="far fa-calendar-alt"></i> Dibuat: ${new Date(order.date_create * 1000).toLocaleString() || (order.activation_time || 'N/A')}
+                               ${timeLeftDisplay}${statusDisplay}${smsCodeDisplay}</p>
+                            ${isActiveList && !currentOrder && order.status_code !== 'RECEIVED_SMS' && order.status_code !== 'ORDER_EXPIRED' && order.status_code !== 'ORDER_CANCELLED' && order.status_code !== 'STATUS_CANCEL' && order.status_code !== 'STATUS_FINISH' ? 
+                                `<button class="resume-order-btn" data-order-id="${order.id}" data-service-name="${order.service_name}" data-number="${order.number}" data-time-left="${order.time_left || order.TimeLeft || order.timeleft}" data-country="${order.country}"><i class="fas fa-play"></i> Lanjutkan Pesanan Ini</button>` : ''}
+                            ${(order.status_code !== 'RECEIVED_SMS' && order.status_code !== 'ORDER_EXPIRED' && order.status_code !== 'ORDER_CANCELLED' && order.status_code !== 'STATUS_CANCEL' && order.status_code !== 'STATUS_FINISH') ?
+                                `<button class="get-otp-manual-btn" data-order-id="${order.id}"><i class="fas fa-envelope-open-text"></i> Cek OTP Manual</button>` : ''}
+                            <button class="view-detail-btn" data-order-id="${order.id}"><i class="fas fa-info-circle"></i> Detail</button>
+                        </div>`;
+                });
+                html += '</div>';
+                containerDiv.innerHTML = html;
+
+                containerDiv.querySelectorAll('.resume-order-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                         if (currentOrder && currentOrder.id) {
+                            showMessage('Selesaikan atau batalkan pesanan aktif saat ini terlebih dahulu.', 'info');
+                            return;
+                        }
+                        currentOrder = {
+                            id: btn.dataset.orderId,
+                            serviceName: btn.dataset.serviceName,
+                            number: btn.dataset.number,
+                            timeLeft: parseInt(btn.dataset.timeLeft || 1200),
+                            country: btn.dataset.country
+                        };
+                        showView('home'); 
+                        displayCurrentOrderUI();
+                        startOtpPolling(currentOrder.id);
+                    });
+                });
+                 containerDiv.querySelectorAll('.get-otp-manual-btn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const orderId = btn.dataset.orderId;
+                        showMessage(`Mengecek OTP untuk order ${orderId}...`, 'info');
+                        const statusResult = await apiCall(`/api/order/status/${orderId}`);
+                        if (statusResult && statusResult.success && statusResult.data) {
+                             const statusData = statusResult.data;
+                             if (statusData.status_code === "RECEIVED_SMS" || (statusData.response === "1" && statusData.sms_code)) {
+                                showMessage(`OTP untuk ${orderId}: ${statusData.sms_code}`, 'success');
+                             } else {
+                                showMessage(`Status OTP ${orderId}: ${statusData.msg || statusData.status_code || 'Belum ada OTP / Error'}`, 'info');
+                             }
+                        } else if (statusResult && !statusResult.success) {
+                            showMessage(statusResult.message || `Gagal cek OTP untuk ${orderId}.`, 'error');
+                        }
+                    });
+                });
+                containerDiv.querySelectorAll('.view-detail-btn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const orderId = btn.dataset.orderId;
+                        const detailResult = await apiCall(`/api/order/detail/${orderId}`);
+                        if(detailResult && detailResult.success && detailResult.data && detailResult.data.data){
+                            alert(`Detail Order ${orderId}:\n${JSON.stringify(detailResult.data.data, null, 2)}`);
+                        } else {
+                            showMessage((detailResult && detailResult.message) ? detailResult.message : 'Gagal mengambil detail order.');
+                        }
+                    });
+                });
+
+            } else if (result && !result.success) {
+                containerDiv.innerHTML = `<p>${result.message || 'Gagal memuat daftar pesanan.'}</p>`;
+            } else {
+                 containerDiv.innerHTML = `<p>Gagal memuat daftar pesanan.</p>`;
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', checkSession);
+
+        registerForm.addEventListener('submit', handleRegister);
+        loginForm.addEventListener('submit', handleLogin);
+        logoutBtn.addEventListener('click', handleLogout);
+
+        showLoginLink.addEventListener('click', (e) => { e.preventDefault(); showView('login'); });
+        showRegisterLink.addEventListener('click', (e) => { e.preventDefault(); showView('register'); });
+
+        navButtons.home.addEventListener('click', () => showView('home'));
+        navButtons.orders.addEventListener('click', loadMyOrdersView);
+        navButtons.profile.addEventListener('click', loadProfileView);
+        
+        apiKeyForm.addEventListener('submit', handleApiKeyUpdate);
+        checkBalanceBtn.addEventListener('click', fetchBalance);
+        depositForm.addEventListener('submit', handleDeposit);
+
+        countrySelect.addEventListener('change', loadServicesForSelectedCountry);
+        
+        cancelOrderBtn.addEventListener('click', () => currentOrder && handleSetOrderStatus(currentOrder.id, '3'));
+        finishOrderBtn.addEventListener('click', () => currentOrder && handleSetOrderStatus(currentOrder.id, '6'));
+        requestNewNumberBtn.addEventListener('click', () => currentOrder && handleSetOrderStatus(currentOrder.id, '8'));
+
+        document.querySelectorAll('.tabs .tab-link').forEach(button => {
+            button.addEventListener('click', () => {
+                const parentTabs = button.closest('.tabs');
+                const targetView = button.closest('.view'); 
+
+                parentTabs.querySelectorAll('.tab-link').forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                
+                targetView.querySelectorAll('.tab-content').forEach(content => {
+                    if (content.classList.contains('view')) return; // Do not hide main views
+                    content.classList.remove('active');
+                });
+                const targetTabContent = document.getElementById(button.dataset.tab);
+                if(targetTabContent) targetTabContent.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>
